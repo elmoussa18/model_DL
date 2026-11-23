@@ -1,0 +1,33 @@
+# Environnement virtuel (très lourd, ne jamais l'envoyer sur GitHub)
+.venv/
+venv/
+env/
+
+# Identifiants Kaggle (secret : ne jamais publier)
+kaggle.json
+
+# Fichiers temporaires de Python / Jupyter / Keras Tuner
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+tuner_dir/
+
+# Jeux de données (trop lourds, téléchargeables sur Kaggle)
+TB_Chest_Radiography_Database/
+chest_xray/
+*.zip
+cifar10.joblib
+*.csv
+
+# Doublons des modèles : l'application n'utilise que les .h5
+*.keras
+*.tmp.h5
+
+# Fichiers du système / éditeur
+.DS_Store
+Thumbs.db
+.vscode/
+
+/*.h5
+/*.joblib
+.agents/
