@@ -31,3 +31,7 @@ Thumbs.db
 /*.h5
 /*.joblib
 .agents/
+
+/*.h5
+/*.joblib
+.agents/

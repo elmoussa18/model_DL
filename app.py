@@ -1,4 +1,4 @@
-# Application Streamlit - Projet Deep Learning (pour le moment : TP1, TP2, TP3 et TP5)
+# Application Streamlit - Projet Deep Learning (Notebooks 1 à 5)
 import os
 import numpy as np
 import pandas as pd
@@ -38,12 +38,12 @@ def charger_tp1():
 
 # ---------------------------------------------------------------- Page TP1
 def page_tp1():
-    st.title('TP1 - Souscription à un dépôt à terme')
+    st.title('Notebook 1 - ANN-Bank-Data')
     st.write("Renseignez les informations du client pour prédire s'il va souscrire.")
 
     ressources = charger_tp1()
     if ressources is None:
-        st.error("Fichiers du modèle introuvables. Exécutez le notebook TP1 jusqu'à la sauvegarde "
+        st.error("Fichiers du modèle introuvables. Exécutez le Notebook 1 jusqu'à la sauvegarde "
                  "(dossier 'Projet/TP1' à côté de app.py).")
         return
     model, scaler, uniques, encoders = ressources
@@ -104,12 +104,12 @@ def charger_tp2():
 
 # ---------------------------------------------------------------- Page TP2
 def page_tp2():
-    st.title('TP2 - Performance des étudiants')
+    st.title('Notebook 2 - ANN-Student Performance')
     st.write("Renseignez les informations de l'étudiant pour prédire son indice de performance (Performance Index).")
 
     ressources = charger_tp2()
     if ressources is None:
-        st.error("Fichiers du modèle introuvables. Exécutez le notebook TP2 jusqu'à la sauvegarde "
+        st.error("Fichiers du modèle introuvables. Exécutez le Notebook 2 jusqu'à la sauvegarde "
                  "(dossier 'Projet/TP2' à côté de app.py).")
         return
     model, scaler, encoder, uniques = ressources
@@ -157,13 +157,13 @@ def predire_tp3(model, image):
 
 # ---------------------------------------------------------------- Page TP3
 def page_tp3():
-    st.title('TP3 - Classification d\'images (CIFAR-10)')
+    st.title('Notebook 3 - CNN-Cifar10')
     st.write('Téléversez une image : le modèle donne la probabilité de chacune des 10 classes '
              '(avion, voiture, oiseau, chat, cerf, chien, grenouille, cheval, bateau, camion).')
 
     model = charger_tp3()
     if model is None:
-        st.error("Fichier du modèle introuvable. Exécutez le notebook TP3 jusqu'à la sauvegarde "
+        st.error("Fichier du modèle introuvable. Exécutez le Notebook 3 jusqu'à la sauvegarde "
                  "(dossier 'Projet/TP3' à côté de app.py).")
         return
 
@@ -182,13 +182,10 @@ def page_tp3():
         st.bar_chart(tableau)
         st.dataframe(tableau.sort_values('Probabilité', ascending = False).style.format('{:.2%}'))
 
-# Classes du TP5 (0 = Normal, 1 = Tuberculosis)
-CLASSES_TB = ['Normal', 'Tuberculosis']
-
-# Charger une seule fois le meilleur modèle du TP5
+# Charger une seule fois un modèle de radiographie (TP5 ou pneumonie)
 @st.cache_resource
-def charger_tp5():
-    chemin_modele = trouver('tuberculosis_best_model.h5', 'TP5')
+def charger_modele_radio(dossier_tp, nom_fichier):
+    chemin_modele = trouver(nom_fichier, dossier_tp)
     if chemin_modele is None:
         return None
     return load_model(chemin_modele, compile = False)
@@ -203,35 +200,35 @@ def pretraiter_radio(image):
     img = np.repeat(img[..., np.newaxis], 3, axis = -1) # répéter le canal gris 3 fois
     return img.reshape(1, 150, 150, 3).astype('float32')
 
-# Prédiction : retourne la probabilité de tuberculose
-def predire_tp5(model, image):
+# Prédiction : retourne la probabilité de la classe positive (1)
+def predire_radio(model, image):
     return float(model.predict(pretraiter_radio(image), verbose = 0)[0][0])
 
-# ---------------------------------------------------------------- Page TP5
-def page_tp5():
-    st.title('TP5 - Détection de la tuberculose (radiographie thoracique)')
+# Page commune aux modèles de radiographies (classe 0 = Normal, classe 1 = maladie)
+def page_radio(titre, dossier_tp, nom_fichier, maladie):
+    st.title(titre)
     st.warning('Outil pédagogique, ne remplace pas un diagnostic médical.')
 
-    model = charger_tp5()
+    model = charger_modele_radio(dossier_tp, nom_fichier)
     if model is None:
-        st.error("Fichier du modèle introuvable. Exécutez le notebook TP5 jusqu'à la sauvegarde "
-                 "(dossier 'Projet/TP5' à côté de app.py).")
+        st.error(f"Fichier du modèle introuvable. Exécutez le notebook correspondant jusqu'à la sauvegarde "
+                 f"(dossier 'Projet/{dossier_tp}' à côté de app.py).")
         return
 
-    fichier = st.file_uploader('Téléverser une radiographie thoracique', type = ['png', 'jpg', 'jpeg'])
+    fichier = st.file_uploader('Téléverser une radiographie thoracique', type = ['png', 'jpg', 'jpeg'],
+                               key = f'upload_{dossier_tp}')
     if fichier is not None:
         image = Image.open(fichier)
         st.image(image, caption = 'Radiographie téléversée', width = 300)
 
-        p_tb = predire_tp5(model, image)
-        probas = {'Normal': 1 - p_tb, 'Tuberculosis': p_tb}
-        classe = 'Tuberculosis' if p_tb > 0.5 else 'Normal'
+        p_maladie = predire_radio(model, image)
+        probas = {'Normal': 1 - p_maladie, maladie: p_maladie}
 
         st.subheader('Résultat')
-        if classe == 'Tuberculosis':
-            st.error(f'Classe prédite : **Tuberculosis** ({p_tb:.1%})')
+        if p_maladie > 0.5:
+            st.error(f'Classe prédite : **{maladie}** ({p_maladie:.1%})')
         else:
-            st.success(f'Classe prédite : **Normal** ({1 - p_tb:.1%})')
+            st.success(f'Classe prédite : **Normal** ({1 - p_maladie:.1%})')
 
         # probabilité de chaque classe
         tableau = pd.DataFrame({'Classe': list(probas.keys()), 'Probabilité': list(probas.values())}).set_index('Classe')
@@ -239,12 +236,22 @@ def page_tp5():
         st.dataframe(tableau.style.format('{:.2%}'))
         st.caption('Outil pédagogique, ne remplace pas un diagnostic médical.')
 
+# ---------------------------------------------------------------- Pages TP5 et Pneumonie
+def page_tp5():
+    page_radio('Notebook 4 - CNN-Tuberculose',
+               'TP5', 'tuberculosis_best_model.h5', 'Tuberculosis')
+
+def page_pneumonie():
+    page_radio('Notebook 5 - CNN-Pneumonie',
+               'Pneumonie', 'pneumonia_best_model.h5', 'Pneumonia')
+
 # ---------------------------------------------------------------- Menu latéral
 st.set_page_config(page_title = 'Projet Deep Learning', layout = 'wide')
 st.sidebar.title('Modèles')
-pages = {'TP1 - Bank data': page_tp1,
-         'TP2 - Student performance': page_tp2,
-         'TP3 - CIFAR-10': page_tp3,
-         'TP5 - Tuberculose': page_tp5}   # le modèle de la pneumonie sera ajouté ici
+pages = {'Notebook 1 - ANN-Bank-Data': page_tp1,
+         'Notebook 2 - ANN-Student Performance': page_tp2,
+         'Notebook 3 - CNN-Cifar10': page_tp3,
+         'Notebook 4 - CNN-Tuberculose': page_tp5,
+         'Notebook 5 - CNN-Pneumonie': page_pneumonie}
 choix = st.sidebar.radio('Choisir un modèle', list(pages.keys()))
 pages[choix]()
